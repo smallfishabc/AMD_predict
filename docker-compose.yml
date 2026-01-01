@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  amd-protein-predict:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: amd-protein-predict:rocm6.1
+    container_name: amd_protein_mi300x
+    
+    # AMD GPU access
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    
+    security_opt:
+      - seccomp=unconfined
+    
+    group_add:
+      - video
+    
+    # Environment variables
+    environment:
+      - ROCM_VERSION=6.1
+      - HSA_OVERRIDE_GFX_VERSION=9.4.2
+      - PYTORCH_ROCM_ARCH=gfx940;gfx941;gfx942
+    
+    # Volume mounts
+    volumes:
+      - ./:/workspace
+      - ./data:/workspace/data
+      - ./embeddings_output:/workspace/embeddings_output
+      - ./structures_output:/workspace/structures_output
+      - ./models:/workspace/models
+      - ./logs:/workspace/logs
+    
+    # Shared memory for multi-processing
+    shm_size: '32gb'
+    
+    # Keep container running
+    stdin_open: true
+    tty: true
+    
+    # Working directory
+    working_dir: /workspace
+    
+    # Resource limits (optional, adjust based on your MI300X)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: amd
+              count: 1
+              capabilities: [gpu]
+
+  # Lightweight version for embeddings only
+  amd-protein-lightweight:
+    build:
+      context: .
+      dockerfile: Dockerfile.lightweight
+    image: amd-protein-predict:lightweight
+    container_name: amd_protein_lightweight
+    
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    
+    security_opt:
+      - seccomp=unconfined
+    
+    group_add:
+      - video
+    
+    environment:
+      - ROCM_VERSION=6.1
+    
+    volumes:
+      - ./sequences_by_length:/workspace/sequences_by_length
+      - ./embeddings_output:/workspace/embeddings_output
+      - ./models:/workspace/models
+    
+    shm_size: '16gb'
+    
+    stdin_open: true
+    tty: true
+    
+    working_dir: /workspace
+    
+    profiles:
+      - lightweight
+
+# Usage:
+# Full stack: docker-compose up -d amd-protein-predict
+# Lightweight: docker-compose --profile lightweight up -d amd-protein-lightweight
+# Build: docker-compose build
+# Shell: docker-compose exec amd-protein-predict /bin/bash

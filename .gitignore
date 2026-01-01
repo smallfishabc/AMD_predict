@@ -76,3 +76,18 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+
+# Docker
+.dockerignore
+*.tar
+*.tar.gz
+
+# Embeddings and outputs
+embeddings_output/
+structures_output/
+
+# Downloaded models
+models/
+
+# FASTA split folders (keep the script)
+sequences_by_length/bin*/

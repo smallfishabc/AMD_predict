@@ -47,7 +47,60 @@ pip install biopython
 
 ## Usage
 
-Coming soon...
+### Quick Start with Docker (Recommended for DigitalOcean AMD)
+
+```bash
+# 1. Build Docker image
+./docker_setup.sh
+
+### Benchmark Results
+
+**ESM2-3B Embeddings:**
+- Time: ~1 hour (80,374 sequences)
+- Output: 191 GB (FP16, per-token)
+- Adaptive batching: 2-256 by length
+
+**SimpleFold Structure Prediction:**
+- SimpleFold-3B: ~23 days (1 GPU, num_steps=200)
+- SimpleFold-700M: ~12 days (1 GPU, faster, 95% accuracy)
+- With 2 GPUs: ~6-12 days
+- Priority subset: Process 10K proteins in 2-3 days
+
+See [simplefold_quick_reference.py](simplefold_quick_reference.py) for details.
+
+### Cloud Testing
+
+Quick test on DigitalOcean AMD (5 minutes):
+```bash
+./cloud_quick_test.sh
+```
+
+Full testing guide: [CLOUD_TESTING.md](CLOUD_TESTING.md)
+
+# 2. Run container
+docker-compose up -d amd-protein-predict
+docker-compose exec amd-protein-predict /bin/bash
+
+# 3. Inside container, test GPU
+rocm-smi
+python -c "import torch; print(torch.cuda.is_available())"
+
+# 4. Generate embeddings
+python esm2_embedding_estimate.py
+```
+
+### Local Setup (Conda)
+
+```bash
+# Activate environment
+conda activate amd_protein
+
+# Analyze FASTA file
+python analyze_fasta.py
+
+# Generate embeddings
+# Coming soon...
+```
 
 ## Performance
 

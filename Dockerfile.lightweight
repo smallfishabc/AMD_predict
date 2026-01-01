@@ -1,0 +1,44 @@
+# Lightweight Dockerfile for ESM2 embedding only
+# Faster build, smaller image
+
+FROM rocm/pytorch:rocm6.1_ubuntu22.04_py3.10_pytorch_2.1.2
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PATH=/opt/rocm/bin:$PATH
+
+LABEL maintainer="smallfishabc"
+LABEL description="Lightweight AMD MI300X image for ESM2-3B embeddings"
+
+# Minimal system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install only essential packages
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+    numpy \
+    pandas \
+    biopython \
+    fair-esm \
+    transformers \
+    safetensors \
+    h5py \
+    tqdm
+
+WORKDIR /workspace
+
+# Copy project files
+COPY requirements.txt /workspace/
+COPY *.py /workspace/
+COPY sequences_by_length/ /workspace/sequences_by_length/
+
+RUN mkdir -p /workspace/embeddings_output /workspace/logs
+
+CMD ["/bin/bash"]
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD rocm-smi || exit 1
